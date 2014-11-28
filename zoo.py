@@ -30,8 +30,8 @@ print 'var : ',sig2
 ##############
 positions = np.ndarray(shape=(101,2))
 st = time.time()
-gmap = gsomap(SP=0.9999,dims=16,nr_s=4,lr_s=0.01,fd=0.999,lrr=0.95,n_jobs=3,sig2=10000)
-gmap.process_batch(features,24)
+gmap = gsomap(SP=0.9999,dims=16,nr_s=10,lr_s=0.01,fd=0.999,lrr=0.95,n_jobs=3,sig2=10000,prune=0.8)
+gmap.process_batch(features,100)
 print len(gmap.map_neurons.keys())
 print (" elapsed time : ",(time.time()-st))
 
@@ -50,7 +50,12 @@ classification=np.array(['mammal','bird','reptile','fish','amphibian','insect','
 labels = names[:,0]
 #for i in range(labels.shape[0]):
 #    labels[i]=classification[int(labels[i])-1]
-
+x = np.array([i for i in range(100)])
+y = np.array(gmap.map_sizes)
+plt.plot(x,y)
+plt.xlabel("iteration")
+plt.ylabel("map size")
+plt.show()
 plt.subplots_adjust(bottom = 0.1)
 plt.scatter(
     positions[:, 0], positions[:, 1], marker = 'o', )

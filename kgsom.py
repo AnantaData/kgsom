@@ -186,18 +186,24 @@ class gsomap(object):
         plt.show()
 
 
-    def __init__(self,SP=0.5,dims=3,nr_s=6,lr_s=0.9,boolean=False, lrr =0.5,fd=0.5, n_jobs = 2,sig2=0.2):
+    def __init__(self,SP=0.5,dims=3,nr_s=6,lr_s=0.9,boolean=False, lrr =0.5,fd=0.5, n_jobs = 2,sig2=0.2,prune=0.5):
+        self.prun_coef=prune
         self.sigma2=sig2
         self.n_jobs= n_jobs
         self.boolean=boolean
         self.fd=fd
         self.lr_red_coef = lrr
         self.dim = dims
+        self.t_time = 2
+        self.map_sizes = []
         for i in range(4):
             x=i/2
             y=i%2
             nhash = str(x)+""+str(y)
             self.map_neurons[nhash] = neuron(i/2, i%2, dims)
+            n = self.map_neurons[nhash]
+            n.time=1
+            self.map_neurons[nhash]=n
 
         ''' definition of growth threshold according to GSOM paper'''
 
@@ -217,6 +223,9 @@ class gsomap(object):
         start_time= time.time()
         self.count=1
         for j in range(k):
+            self.map_sizes.append(len(self.map_neurons.values()))
+
+            self.t_time+=1
             for i in range(batch_np_array.shape[0]):
                 self.count+=1
                 sys.stdout.write("iteration %d :"%(j+1))
@@ -225,6 +234,7 @@ class gsomap(object):
                 sys.stdout.write(" map size %d "%(len(self.map_neurons.keys())))
                 sys.stdout.write(" time %d \r"%(time.time()-start_time))
                 sys.stdout.flush()
+
                 tinp = batch_np_array[i]
                 bcoords=self.process_input(tinp)
                 bhash=str(bcoords[0])+""+str(bcoords[1])
@@ -242,7 +252,8 @@ class gsomap(object):
                 print self.nr
                 return
             for l in self.map_neurons.keys():
-                if self.map_neurons[l].hits <= 0.01*(0.01**k)*self.count or self.map_neurons[l].time <= 0.99**k* self.count:
+                ''''''
+                if self.map_neurons[l].hits <= self.prun_coef*(0.1**k)*self.count*(9**(j)) or self.map_neurons[l].time <= j*self.t_time/k:
                     del self.map_neurons[l]
 
         return
@@ -272,10 +283,11 @@ class gsomap(object):
             nhash = str(neu.x_c)+""+str(neu.y_c)
            # print "bmu: "+str(bmu.coords())
             #print "neu: "+str(neu.coords())nhash
-            if minkowski(bmu.coords().astype(float), neu.coords().astype(float), 2) < self.nr:
-                '''weight adjustment'''
+            dist =  minkowski(bmu.coords().astype(float), neu.coords().astype(float), 2)
+            if dist< self.nr:
+                '''weight adjustment *np.exp(-1*dist**2/2*self.nr**2)'''
                 #neu.weight_vs = neu.weight_vs + self.lr * (input_np_array-neu.weight_vs)
-                neu.weight_vs = neu.weight_vs + self.lr * self.adjustment_gaus(input_np_array,neu.weight_vs)
+                neu.weight_vs = neu.weight_vs + self.lr *np.exp(((dist/self.nr)**2)/(-2))* self.adjustment_gaus(input_np_array,neu.weight_vs)
                 err =self.gaussian_error(input_np_array,neu.weight_vs)
                 neu.res_err += err#minkowski(neu.weight_vs, bmu.weight_vs, 2)
                 self.map_neurons[nhash]=neu
@@ -300,6 +312,7 @@ class gsomap(object):
 
                 except KeyError:
                     nwron=neuron(nei_coordi[p][0], nei_coordi[p][1], self.dim)
+                    nwron.time=self.t_time
                     new_weight = 0
                     #case a) new node has two consecutive nodes on one of its sides
                     #tiroshan and lakmal please implement the code here

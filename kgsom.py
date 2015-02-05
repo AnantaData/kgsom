@@ -59,9 +59,7 @@ class gsomap(object):
     def gaus_kern(self, u, v):
         return np.exp(-1*(np.linalg.norm((u-v))*(np.linalg.norm(u-v))/(2*self.sigma2)))
 
-
     def dist_gaus_kern(self, v, u):
-
         return -1*self.gaus_kern(u,v)
 
     def adjustment_gaus(self, x, m):
@@ -110,9 +108,6 @@ class gsomap(object):
 
         return candidate
 
-
-
-
     def viewmap(self):
         x=np.ndarray(shape=len(self.map_neurons))
         y=np.ndarray(shape=len(self.map_neurons))
@@ -128,7 +123,7 @@ class gsomap(object):
         plt.show()
 
 
-    def __init__(self,SP=0.5,dims=3,nr_s=6,lr_s=0.9,boolean=False, lrr =0.5,fd=0.5, n_jobs = 2,sig2=0.2,prune=0.5):
+    def __init__(self,SP=0.5,dims=16,nr_s=6,lr_s=0.9,boolean=False, lrr =0.5,fd=0.5, n_jobs = 2,sig2=0.2,prune=0.5):
         self.prun_coef=prune
         self.sigma2=sig2
         self.n_jobs= n_jobs
@@ -150,7 +145,7 @@ class gsomap(object):
         ''' definition of growth threshold according to GSOM paper'''
 
         self.thresh=-1*dims*np.log(SP)
-        print "error threshold : ",self.thresh
+        #print "error threshold : ",self.thresh
         self.nr=nr_s
         self.lr=lr_s
         #print self.map_neurons

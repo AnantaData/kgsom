@@ -5,6 +5,8 @@ import time
 import numpy as np
 from kgsom import gsomap
 import matplotlib.pyplot as plt
+import refactored_kgsom
+
 data = np.loadtxt("zoo.data.txt",dtype=str,delimiter=",")
 
 data = np.array(data)
@@ -29,9 +31,14 @@ sig2 = np.var(norms)
 print 'var : ',sig2
 ##############
 positions = np.ndarray(shape=(101,2))
-st = time.time()
+#st = time.time()
+'''
 gmap = gsomap(SP=0.9999,dims=16,nr_s=10,lr_s=0.01,fd=0.999,lrr=0.95,n_jobs=3,sig2=10000,prune=0.8)
-gmap.process_batch(features,100)
+gmap.process_batch(features,100)'''
+
+gmap = refactored_kgsom.get_kgsom(features,positions,names,spread_factor=0.9999,dim=16,nr_s=10,lr_s=0.01,boolean=False,fd=0.999,lrr=0.95,n_jobs=3,sig2=10000,prune=0.8,iterations=100)
+
+'''
 print len(gmap.map_neurons.keys())
 print (" elapsed time : ",(time.time()-st))
 
@@ -44,7 +51,6 @@ names=np.column_stack((names,positions[:,0],positions[:,1]))
 #print names
 
 classification=np.array(['mammal','bird','reptile','fish','amphibian','insect','seacreature'])
-
 
 
 labels = names[:,0]
@@ -83,4 +89,4 @@ plt.scatter(positions[:,0],positions[:,1],c=colorlist,s=sizes)
 plt.show()
 gmap.viewmap()
 
-#print gmap.map_neurons['010'].weight_vs
+#print gmap.map_neurons['010'].weight_vs'''

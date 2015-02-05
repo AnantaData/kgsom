@@ -56,6 +56,7 @@ class gsomap(object):
 
     map_neurons ={}
 
+# ---------------- gausian kernal ---------------
     def gaus_kern(self, u, v):
         return np.exp(-1*(np.linalg.norm((u-v))*(np.linalg.norm(u-v))/(2*self.sigma2)))
 
@@ -81,6 +82,63 @@ class gsomap(object):
 
                 #print "candidate'scoords",candidate.coords()
         return  candidate
+
+# ---------------- cauchy kernal ---------------
+
+    def cau_kern(self, u, v):
+        return (1/(1+(((np.linalg.norm(u-v))*(np.linalg.norm(u-v)))/self.sigma2)))
+
+    def dist_cau_kern(self, v, u):
+        return -1*self.cau_kern(u,v)
+
+    def adjustment_cau(self, x, m):
+        return self.cau_kern(x,m)*self.cau_kern(x,m)*(x-m)
+
+    def bmu_cau(self,input_vec):
+        minDist=9223372036854775807
+        candidate= None
+        for neu in self.map_neurons.itervalues():
+            #print "input: "+str(input_nparray)
+            #print "neuron: "+str (neu.weight_vs)
+
+            cand=self.dist_cau_kern(input_vec, neu.weight_vs)
+            if minDist> cand:
+            #print "mindist:",minDist
+            #print "cand:",cand
+                minDist = cand
+                candidate= neu
+
+                #print "candidate'scoords",candidate.coords()
+        return  candidate
+
+# ---------------- log kernal ---------------
+
+    def log_kern(self, u, v):
+        return -1*np.log((np.linalg.norm(u-v))*(np.linalg.norm(u-v))+1)
+
+    def dist_log_kern(self, v, u):
+        return -1*self.log_kern(u,v)
+
+    def adjustment_log(self, x, m):
+        return ((x-m)/(np.linalg.norm(x-m)*np.linalg.norm(x-m)+1))
+
+    def bmu_log(self,input_vec):
+        minDist=9223372036854775807
+        candidate= None
+        for neu in self.map_neurons.itervalues():
+            #print "input: "+str(input_nparray)
+            #print "neuron: "+str (neu.weight_vs)
+
+            cand=self.dist_log_kern(input_vec, neu.weight_vs)
+            if minDist> cand:
+            #print "mindist:",minDist
+            #print "cand:",cand
+                minDist = cand
+                candidate= neu
+
+                #print "candidate'scoords",candidate.coords()
+        return  candidate
+
 
 
     def parallel_search_bmu(self, input_vector):
@@ -155,7 +213,6 @@ class gsomap(object):
         bmu = self.getBMU(input_array)
         #bmu = self.parallel_search_bmu(input_array)
         return bmu.coords()
-
 
     def process_batch(self,batch_np_array, k=10):
         start_time= time.time()
